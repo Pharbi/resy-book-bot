@@ -44,7 +44,9 @@ class TaskHandler:
 		# save the res request attempt
 		resy_task_req = dict(filter(lambda key: key[0] in self.res_req_keys, payload.items()))
 		resy_task_req['task_id'] = resp.name[resp.name.rindex('/') + 1:]
-		firestore_client.collection(f"reservation_task_request/${resy_task_payload['uid']}/tasks").document(resy_task_req['task_id']).create(resy_task_req)
+                firestore_client.collection(
+                    f"reservation_task_request/{resy_task_payload['uid']}/tasks"
+                ).document(resy_task_req['task_id']).create(resy_task_req)
 		self.task_builder_logger.info(f"Saved task request {resy_task_req['task_id']}")
 		return resp
 
@@ -76,8 +78,10 @@ class TaskHandler:
 			self.task_builder_logger.info("Attempting to process task request {venue}".format(venue=payload['venue_id']))
 			return resy_client.book_res(payload)
 
-	def active_tasks(self, uid: str):
-		resy_req_tasks = firestore_client.collection(f"reservation_task_request/${uid}/tasks").limit(10).stream()
+        def active_tasks(self, uid: str):
+                resy_req_tasks = firestore_client.collection(
+                        f"reservation_task_request/{uid}/tasks"
+                ).limit(10).stream()
 		active_tasks = []
 		for task in resy_req_tasks:
 			active_tasks.append(task.to_dict())
