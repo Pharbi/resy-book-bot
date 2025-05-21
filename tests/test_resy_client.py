@@ -61,7 +61,11 @@ def test_get_venue_details_success():
     data = {
         "id": {"resy": "1"},
         "name": "Place",
+<<<<<<< ours
         "links": {"web": "http://example.com"},
+=======
+        "links": {"web": "http://example.com"\},
+>>>>>>> theirs
         "location": {"neighborhood": "Hood", "latitude": 1.0, "longitude": 2.0},
     }
     api = DummyAPI({"venue_details": DummyResp(200, data)})
