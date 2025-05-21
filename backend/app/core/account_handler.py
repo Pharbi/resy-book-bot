@@ -64,12 +64,14 @@ class AccountHandler:
 	def valid_resy_token(self, user_id):
 		return True if self.get_resy_token(user_id) else False
 
-	def delete_reservation_request(self, uid, task_id):
-		try:
-			self.firestore_client.collection(f"reservation_task_request/${uid}/tasks").document(task_id).delete()
-		except Exception as e:
-			self.account_handler_logger.error(f"Error deleting reservation request, it may have already been deleted: {e}")
-		return
+        def delete_reservation_request(self, uid, task_id):
+                try:
+                        self.firestore_client.collection(
+                                f"reservation_task_request/{uid}/tasks"
+                        ).document(task_id).delete()
+                except Exception as e:
+                        self.account_handler_logger.error(f"Error deleting reservation request, it may have already been deleted: {e}")
+                return
 
 	def send_email(self, email, subject, body):
 		self.account_handler_logger.info(f"Sending email related to user about: {subject}")
