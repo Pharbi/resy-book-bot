@@ -106,3 +106,10 @@ def test_check_token_failure(fake_app):
     resp = client.get("/user/check-token", query_string={"userId": "1"})
     assert resp.status_code == 401
     assert removed["uid"] == "1"
+
+def test_venue_details_requires_auth(fake_app):
+    app = create_app("app.routes.resy_interactions")
+    client = app.test_client()
+    resp = client.get("/resy/venue-details")
+    assert resp.status_code == 403
+
