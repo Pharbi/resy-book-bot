@@ -31,7 +31,8 @@
     "build": "react-scripts build && cd .. && rm -rf backend/app/build && mv frontend/build backend/app && rm -rf frontend/build",
     "firebase-build": "react-scripts build && firebase deploy --only hosting",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --max-warnings=0"
   },
   "eslintConfig": {
     "extends": [
