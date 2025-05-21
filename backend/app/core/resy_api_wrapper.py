@@ -30,60 +30,86 @@ USER_AGENTS = [
 
 
 class ResyApiWrapper:
-	def __init__(self, resy_url, resy_api_key, logger: logging.Logger, resy_token=''):
-		self.session = create_scraper()
-		self.session.headers.update(
-			{
-				'authorization': "ResyAPI api_key=\"{resy_api_key}\"".format(resy_api_key=resy_api_key),
-				'user-agent': self.random_user_agent(),
-				'x-origin': "https://resy.com"
-			})
-		self.resy_token = resy_token
-		self.base_url = f"https://{resy_url}"
-		self.api_wrapper_logger = logger
+        def __init__(self, resy_url, resy_api_key, logger: logging.Logger, resy_token=''):
+                self.session = create_scraper()
+                self.session.headers.update(
+                        {
+                                'authorization': "ResyAPI api_key=\"{resy_api_key}\"".format(resy_api_key=resy_api_key),
+                                'user-agent': self.random_user_agent(),
+                                'x-origin': "https://resy.com"
+                        })
+                self.resy_token = resy_token
+                self.base_url = f"https://{resy_url}"
+                self.api_wrapper_logger = logger
 
-	def auth_user(self, user_creds):
-		# basically dead because resy api refuses any attempt to auth through the api
-		self.api_wrapper_logger.info(f"Attempting to authenticate user {user_creds['email']}")
-		self.session.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
-		resy_resp = self.session.post(f"{self.base_url}/3/auth/password", data=user_creds)
-		if resy_resp.status_code == 200:
-			return resy_resp.json()
-		self.api_wrapper_logger.error(
-			f"Received {resy_resp.status_code} on request for resources. Resy Reason: {resy_resp.text}")
-		return {'error': "error, view logs"}
+        def auth_user(self, user_creds):
+                # basically dead because resy api refuses any attempt to auth through the api
+                self.api_wrapper_logger.info(f"Attempting to authenticate user {user_creds['email']}")
+                self.session.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
+                resy_resp = self.session.post(f"{self.base_url}/3/auth/password", data=user_creds)
+                if resy_resp.status_code == 200:
+                        return resy_resp.json()
+                self.api_wrapper_logger.error(
+                        f"Received {resy_resp.status_code} on request for resources. Resy Reason: {resy_resp.text}")
+                return {'error': "error, view logs"}
 
-	def set_resy_token(self, resy_token):
-		self.resy_token = resy_token
-		self.session.headers.update({"x-resy-auth-token": resy_token})
+        def set_resy_token(self, resy_token):
+                self.resy_token = resy_token
+                self.session.headers.update({"x-resy-auth-token": resy_token})
 
-	def find_venue(self, search_request: Dict):
-		self.api_wrapper_logger.info(f"Attempting to get venues with available reservations: {search_request}")
-		find_venues_url = f"{self.base_url}/4/find?" + urlencode(search_request)
-		return self.session.get(url=find_venues_url)
+        def find_venue(self, search_request: Dict):
+                self.api_wrapper_logger.info(f"Attempting to get venues with available reservations: {search_request}")
+                find_venues_url = f"{self.base_url}/4/find?" + urlencode(search_request)
+                return self.session.get(url=find_venues_url)
 
-	def get_venue_details(self, venue_id):
-		self.api_wrapper_logger.info(f"Attempting to get venue details for {venue_id}")
-		return self.session.get(f"{self.base_url}/3/venue?id={venue_id}")
+        def get_venue_details(self, venue_id):
+                self.api_wrapper_logger.info(f"Attempting to get venue details for {venue_id}")
+                return self.session.get(f"{self.base_url}/3/venue?id={venue_id}")
 
-	def get_reservation_details(self, booking_request):
-		self.api_wrapper_logger.info(f"Attempting to get reservation details for {booking_request['config_id']}")
-		res_details_url = f"{self.base_url}/3/details?" + urlencode(booking_request, encoding='UTF-8')
-		return self.session.get(res_details_url)
+        def get_reservation_details(self, booking_request):
+                self.api_wrapper_logger.info(f"Attempting to get reservation details for {booking_request['config_id']}")
+                res_details_url = f"{self.base_url}/3/details?" + urlencode(booking_request, encoding='UTF-8')
+                return self.session.get(res_details_url)
 
-	def create_reservation(self, payment_method_id, booking_token):
-		self.session.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
-		query_params = {
-			"book_token": booking_token,
-			"struct_payment_method": json.dumps({'id': payment_method_id})
-		}
-		self.api_wrapper_logger.info(f"Attempting to create reservation for {booking_token}")
-		resp = self.session.post(f"{self.base_url}/3/book", data=query_params)
-		return resp
+        def create_reservation(self, payment_method_id, booking_token):
+                self.session.headers.update({"Content-Type": "application/x-www-form-urlencoded"})
+                query_params = {
+                        "book_token": booking_token,
+                        "struct_payment_method": json.dumps({'id': payment_method_id})
+                }
+                self.api_wrapper_logger.info(f"Attempting to create reservation for {booking_token}")
+                resp = self.session.post(f"{self.base_url}/3/book", data=query_params)
+                return resp
 
-	def get_res_list(self, uid):
-		self.api_wrapper_logger.info(f"Attempting to check reservation for {uid}")
-		return self.session.get(f"{self.base_url}/3/user/reservations")
+        def get_res_list(self, uid):
+                self.api_wrapper_logger.info(f"Attempting to check reservation for {uid}")
+                return self.session.get(f"{self.base_url}/3/user/reservations")
 
-	def random_user_agent(self):
-		return random.choice(USER_AGENTS)
+        def search_availability(self, availability_input: Dict):
+                self.api_wrapper_logger.info(
+                f"Searching availability with: {availability_input}")
+                self.session.headers.update({"Content-Type": "application/json"})
+                payload = {
+                "operationName": "SearchAvailability",
+                "variables": {"input": availability_input},
+                "query": (
+                "query SearchAvailability($input: AvailabilityInput!) {"
+                " availability(input: $input) {"
+                "  ... on AvailabilitySuccess {"
+                "   slots {"
+                "    id\n    start_at\n    config_token\n    table_type {"
+                "     id\n     name"
+                "    }"
+                "   }"
+                "  }"
+                "  ... on AvailabilityError {"
+                "   code\n   message"
+                "  }"
+                " }"
+                "}"
+                ),
+                }
+                return self.session.post(f"{self.base_url}/graphql", json=payload)
+
+        def random_user_agent(self):
+                return random.choice(USER_AGENTS)

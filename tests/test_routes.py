@@ -27,7 +27,17 @@ def fake_app(monkeypatch):
     class ResyTokenForm:
         pass
 
+    class ResyFindVenueForm:
+        pass
+
+    class ResyReservationWatchForm:
+        pass
+
     rf.ResyTokenForm = ResyTokenForm
+    rf.ResyFindVenueForm = ResyFindVenueForm
+    rf.ResyReservationWatchForm = ResyReservationWatchForm
+    forms_pkg.ResyFindVenueForm = ResyFindVenueForm
+    forms_pkg.ResyReservationWatchForm = ResyReservationWatchForm
     uf = types.ModuleType("app.forms.user_account_forms")
 
     class RegistrationForm:
@@ -54,6 +64,9 @@ def fake_app(monkeypatch):
 
     for name in modules.keys():
         sys.modules.pop(name, None)
+    for mod_name in list(sys.modules.keys()):
+        if mod_name.startswith("app.routes."):
+            sys.modules.pop(mod_name, None)
 
 
 def create_app(module_path):

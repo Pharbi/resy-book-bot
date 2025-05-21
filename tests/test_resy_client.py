@@ -1,13 +1,70 @@
+import importlib.util
 import logging
+import os
+import sys
+import types
 import pytest
 from sortedcontainers import SortedList
-from app.core.resy_client import ResyClient, build_priority_list
+
+
+def load_core_modules():
+    original_app = sys.modules.pop("app", None)
+    original_core = sys.modules.pop("app.core", None)
+    fake_app = types.ModuleType("app")
+    core_pkg = types.ModuleType("app.core")
+    sys.modules["app"] = fake_app
+    sys.modules["app.core"] = core_pkg
+
+    spec = importlib.util.spec_from_file_location(
+        "app.core.resy_api_wrapper",
+        os.path.join("backend", "app", "core", "resy_api_wrapper.py"),
+    )
+    resy_api_wrapper_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(resy_api_wrapper_mod)
+    sys.modules["app.core.resy_api_wrapper"] = resy_api_wrapper_mod
+    core_pkg.resy_api_wrapper = resy_api_wrapper_mod
+    core_pkg.ResyApiWrapper = resy_api_wrapper_mod.ResyApiWrapper
+
+    spec = importlib.util.spec_from_file_location(
+        "app.core.resy_client",
+        os.path.join("backend", "app", "core", "resy_client.py"),
+    )
+    resy_client_mod = importlib.util.module_from_spec(spec)
+    resy_client_mod.__package__ = "app.core"
+    spec.loader.exec_module(resy_client_mod)
+    sys.modules["app.core.resy_client"] = resy_client_mod
+    originals = {"app": original_app, "app.core": original_core}
+    return resy_client_mod, originals
+
+
+
+@pytest.fixture(scope="module", autouse=True)
+def core_modules_fixture():
+    mod, originals = load_core_modules()
+    global ResyClient, build_priority_list
+    ResyClient = mod.ResyClient
+    build_priority_list = mod.build_priority_list
+    yield
+    for name in [
+        "app.core.resy_client",
+        "app.core.resy_api_wrapper",
+    ]:
+        sys.modules.pop(name, None)
+    if originals["app"] is not None:
+        sys.modules["app"] = originals["app"]
+    else:
+        sys.modules.pop("app", None)
+    if originals["app.core"] is not None:
+        sys.modules["app.core"] = originals["app.core"]
+    else:
+        sys.modules.pop("app.core", None)
 
 
 class DummyResp:
     def __init__(self, status, data=None):
         self.status_code = status
         self._data = data or {}
+        self.text = ""
 
     def json(self):
         return self._data
@@ -27,7 +84,6 @@ class DummyAPI:
     def find_venue(self, query):
         return self.responses.get('find_venue', DummyResp(404))
 
-
 def test_build_priority_list_selects_preceding_slots():
     slots = SortedList(
         [
@@ -37,7 +93,6 @@ def test_build_priority_list_selects_preceding_slots():
         ],
         key=lambda s: s[0],
     )
-
     res_times = ["2023-03-04 18:15", "2023-03-04 19:15"]
     result = build_priority_list(slots, res_times)
     assert result == [("2023-03-04 18:00", "t1"), ("2023-03-04 19:00", "t3")]
@@ -51,7 +106,6 @@ def test_build_priority_list_exact_match():
         ],
         key=lambda s: s[0],
     )
-
     res_times = ["2023-03-04 18:30"]
     result = build_priority_list(slots, res_times)
     assert result == [("2023-03-04 18:30", "t2")]
