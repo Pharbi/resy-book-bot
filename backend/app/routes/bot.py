@@ -54,8 +54,12 @@ def check_auth():
 		Thank you,<br>
 		Rip Resy
 		"""
-		account_handler.send_email(account_handler.get_user_email(payload['uid']), "RIP Resy Auth Key Update" ,body)
-		return Response(response=f"sent email to ${payload['uid']}", status=200)
+                account_handler.send_email(
+                        account_handler.get_user_email(payload['uid']),
+                        "RIP Resy Auth Key Update",
+                        body,
+                )
+                return Response(response=f"sent email to {payload['uid']}", status=200)
 	elif resp.status_code == 500:
 		bot_logger.info("An error occurred when attempting to check auth, server issue, check logs")
 		return resp
