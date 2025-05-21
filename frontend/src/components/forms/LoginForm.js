@@ -31,7 +31,7 @@ const LoginWithOtherProviders = (props) => {
       const {displayName, email, uid} = resp.user;
       dispatch(saveUser({displayName, email}));
       dispatch(saveFirebaseUID(uid));
-      navigate(`/user/${uid}}`);
+      navigate(`/user/${uid}`);
     }).catch((error) => {
       console.log(error);
     });
@@ -62,7 +62,7 @@ function Login() {
       dispatch(saveUser({displayName, email}));
       dispatch(saveFirebaseUID(uid));
       dispatch(saveRememberChoice(remember));
-      navigate(`/user/${uid}}`);
+      navigate(`/user/${uid}`);
     }).catch((error) => {
       console.log(error);
     });
